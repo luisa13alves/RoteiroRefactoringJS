@@ -1,6 +1,7 @@
 const { readFileSync } = require('fs');
 
 function gerarFaturaStr (fatura, pecas) {
+
     function getPeca(apresentacao) {
       return pecas[apresentacao.id];
     }
@@ -18,7 +19,7 @@ function gerarFaturaStr (fatura, pecas) {
         { style: "currency", currency: "BRL",
           minimumFractionDigits: 2 }).format(valor/100);
     }
-    
+
 function calcularTotalApresentacao(apre) {
   let total = 0;
   switch (getPeca(apre).tipo) {
@@ -41,33 +42,37 @@ function calcularTotalApresentacao(apre) {
   return total;
 }
 
-    let totalFatura = 0;
-    let creditos = 0;
-    let faturaStr = `Fatura ${fatura.cliente}\n`;
-    
-    const formato = new Intl.NumberFormat("pt-BR",
-                          { style: "currency", currency: "BRL",
-                            minimumFractionDigits: 2 }).format;
-                   
+function calcularTotalFatura(){
+ let total = 0;
+ for (let apre of fatura.apresentacoes){
+
+  total += calcularTotalApresentacao(apre);
+ }
+ return total;
+}
+
+function calcularTotalCreditos(){
+let creditos =0;
+for(let apre of fatura.apresentacoes){
+creditos+= calcularCredito(apre);
+
+}
+return creditos;
+
+}
+
+    let faturaStr = `Fatura ${fatura.cliente}\n`;      
+
     for (let apre of fatura.apresentacoes) {
-          const peca = getPeca(apre);
-          let total = calcularTotalApresentacao(apre, peca);
-        
-          creditos += calcularCredito(apre);
-          
-    // mais uma linha da fatura
-      faturaStr += `  ${getPeca(apre).nome}: ${formato(total/100)} (${apre.audiencia} assentos)\n`;
-      totalFatura += total;
+    faturaStr += `  ${getPeca(apre).nome}: ${formatarMoeda(calcularTotalApresentacao(apre))} (${apre.audiencia} assentos)\n`;
+  
     }
 
-    faturaStr += `Valor total: ${formato(totalFatura/100)}\n`;
-    faturaStr += `Créditos acumulados: ${creditos} \n`;
+    faturaStr += `Valor total: ${formatarMoeda(calcularTotalFatura())}\n`;
+    faturaStr += `Créditos acumulados: ${calcularTotalCreditos()} \n`;
 
     return faturaStr;
     }
-
-     
-
 
 const faturas = JSON.parse(readFileSync('./faturas.json'));
 const pecas = JSON.parse(readFileSync('./pecas.json'));
